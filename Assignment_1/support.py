@@ -107,5 +107,5 @@ def matrix_to_graphviz(matrix, output_file="output.pdf"):
 	pn_visualizer.save(gviz, output_file)
 
 
-dataset = load_dataset("../dataset_a1.txt")
+dataset = load_dataset("dataset_a1.txt")
 
