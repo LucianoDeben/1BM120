@@ -1,4 +1,4 @@
-# 1BM120 Assignment 1: Evolutionary process discovery (2023/2024)
+# 1BM120 Decision making with artificial and computational intelligence (2023/2024)
 
 - Author 1: Dhani Crapels
 - Author 2: Sven Bierenbroodspot
