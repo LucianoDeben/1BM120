@@ -1,1 +1,1 @@
-# Assignment 2: Convolutional Neural Networks, AutoML and Deep Reinforcement Learning
+# Assignment 2: Convolutional Neural Networks and AutoML
