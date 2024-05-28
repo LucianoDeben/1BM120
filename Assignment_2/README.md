@@ -27,7 +27,15 @@ A CUDA-enabled GPU is recommended for faster computation, but the code can also 
 
 ## Instructions
 
-1. Run the `cnn.py` script to train and evaluate the CNN on the image dataset. This script will output the model's performance metrics.
+The `train_and_test.py` script is used to train the Convolutional Neural Network (CNN) on the provided image dataset and evaluate its performance. The script will output the model's performance metrics.
+
+To execute the `train_and_test.py` script, follow these steps:
+
+1. Open a terminal window.
+2. Navigate to the directory containing the `train_and_test.py` script. You can use the `cd` command to change directories.
+3. Once you're in the correct directory, run the script using the Python command followed by the script name: `python train_and_test.py`.
+
+The script will start executing, and you should see the output.
 
 ## Results
 
