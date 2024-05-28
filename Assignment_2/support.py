@@ -4,16 +4,16 @@ import torch
 
 def load_dataset():
     
-    # Set the mean and std for the dataset to 0 mean and 1 std
-    mean = [0.5, 0.5, 0.5]
-    std = [0.5, 0.5, 0.5]
+    # # Set the mean and std for the dataset to 0 mean and 1 std
+    # mean = [0.5, 0.5, 0.5]
+    # std = [0.5, 0.5, 0.5]
 
     transform = transforms.Compose(
         [
             transforms.Resize([105, 78]),
             transforms.CenterCrop(size=[60, 30]),
             transforms.ToTensor(),
-            transforms.Normalize(mean=mean, std=std),
+            # transforms.Normalize(mean=mean, std=std),
         ]
     )
 
@@ -28,23 +28,4 @@ def load_dataset():
     )
 
     return train_dataset, test_dataset
-
-def calculate_mean_std(dataset):
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=2)
-
-    mean = 0.0
-    for images, _ in dataloader:
-        batch_samples = images.size(0) 
-        images = images.view(batch_samples, images.size(1), -1)
-        mean += images.mean(2).sum(0)
-    mean = mean / len(dataloader.dataset)
-
-    var = 0.0
-    for images, _ in dataloader:
-        batch_samples = images.size(0)
-        images = images.view(batch_samples, images.size(1), -1)
-        var += ((images - mean.unsqueeze(1))**2).sum([0,2])
-    std = torch.sqrt(var / (len(dataloader.dataset)*images.size(2)))
-
-    return mean, std
 
