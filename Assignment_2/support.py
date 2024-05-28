@@ -4,8 +4,9 @@ import torch
 
 def load_dataset():
     
-    mean = [0.3699, 0.2424, 0.2564]
-    std = [0.0888, 0.1932, 0.1779]
+    # Set the mean and std for the dataset to 0 mean and 1 std
+    mean = [0.5, 0.5, 0.5]
+    std = [0.5, 0.5, 0.5]
 
     transform = transforms.Compose(
         [
