@@ -1,15 +1,25 @@
 import torch
-from torch.utils.data import DataLoader, random_split, Subset
 import torch.nn as nn
 import torch.optim as optim
-from tqdm import tqdm
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import KFold
+from torch.utils.data import DataLoader, Subset, random_split
+from tqdm import tqdm
 
-def train_model(model, train_data, criterion, optimizer, device, n_epochs=10, val_split=0.1, model_name="simple_model"):
+
+def train_model(
+    model,
+    train_data,
+    criterion,
+    optimizer,
+    device,
+    n_epochs=10,
+    val_split=0.1,
+    model_name="simple_model",
+):
     """
     Train a PyTorch model on a dataset
-    
+
     Args:
     - model: PyTorch model
     - dataset: PyTorch dataset
@@ -24,23 +34,33 @@ def train_model(model, train_data, criterion, optimizer, device, n_epochs=10, va
     - train_losses: list of training losses
     - val_losses: list of validation losses
     """
+    # Split data into training and validation sets
     train_size = int((1 - val_split) * len(train_data))
     val_size = len(train_data) - train_size
-    train_dataset, val_dataset = random_split(train_data, [train_size, val_size])
+    train_dataset, val_dataset = random_split(
+        train_data, [train_size, val_size], generator=torch.Generator().manual_seed(42)
+    )
 
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, drop_last=False)
-    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=True, drop_last=False)
+    # Create data loaders
+    train_loader = DataLoader(
+        train_dataset, batch_size=64, shuffle=True, drop_last=False
+    )
+    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False, drop_last=False)
 
     train_losses = []
     val_losses = []
-    best_val_loss = float('inf')
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+    best_val_loss = float("inf")
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.75)
 
     for epoch in range(n_epochs):
         model.train()
         running_loss = 0.0
-        for data in tqdm(train_loader, desc=f'Training Epoch {epoch + 1}/{n_epochs}'):
-            inputs, labels = data
+        correct_train = 0
+        total_train = 0
+
+        for inputs, labels in tqdm(
+            train_loader, desc=f"Training Epoch {epoch + 1}/{n_epochs}"
+        ):
             inputs, labels = inputs.to(device), labels.to(device).float()
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -48,22 +68,36 @@ def train_model(model, train_data, criterion, optimizer, device, n_epochs=10, va
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
-            
+
+            # Calculate training accuracy
+            predicted = (outputs > 0.5).float()
+            correct_train += (predicted == labels).sum().item()
+            total_train += labels.size(0)
+
         avg_train_loss = running_loss / len(train_loader)
         train_losses.append(avg_train_loss)
+        train_accuracy = 100 * correct_train / total_train
 
         model.eval()
         running_loss = 0.0
+        correct_val = 0
+        total_val = 0
+
         with torch.no_grad():
-            for data in val_loader:
-                inputs, labels = data
+            for inputs, labels in val_loader:
                 inputs, labels = inputs.to(device), labels.to(device).float()
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
                 running_loss += loss.item()
-                
+
+                # Calculate validation accuracy
+                predicted = (outputs > 0.5).float()
+                correct_val += (predicted == labels).sum().item()
+                total_val += labels.size(0)
+
         avg_val_loss = running_loss / len(val_loader)
         val_losses.append(avg_val_loss)
+        val_accuracy = 100 * correct_val / total_val
 
         scheduler.step()
 
@@ -71,21 +105,24 @@ def train_model(model, train_data, criterion, optimizer, device, n_epochs=10, va
             best_val_loss = avg_val_loss
             torch.save(model.state_dict(), f"models/{model_name}.pth")
 
-        print(f'Epoch {epoch + 1}, Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}')
+        print(
+            f"Epoch {epoch + 1}, Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}, "
+            f"Train Acc: {train_accuracy:.2f}%, Val Acc: {val_accuracy:.2f}%"
+        )
 
-    print('Finished Training')
+    print("Finished Training")
     return train_losses, val_losses
 
 
 def test_model(model, test_data, device):
     """
     Test a PyTorch model on a dataset
-    
+
     Args:
     - model: PyTorch model
     - test_data: PyTorch dataset
     - device: 'cpu' or 'cuda'
-    
+
     Returns:
     - accuracy: accuracy of the model on the test set
     - precision: precision of the model on the test set
@@ -97,10 +134,9 @@ def test_model(model, test_data, device):
     model.to(device)
     all_labels = []
     all_predictions = []
-    
+
     with torch.no_grad():
-        for data in tqdm(test_loader, desc="Testing"):
-            images, labels = data
+        for images, labels in tqdm(test_loader, desc="Testing"):
             images, labels = images.to(device), labels.to(device).float()
             outputs = model(images)
             predicted = torch.round(outputs)
@@ -108,32 +144,33 @@ def test_model(model, test_data, device):
             all_predictions.extend(predicted.cpu().numpy())
 
     accuracy = accuracy_score(all_labels, all_predictions)
-    precision = precision_score(all_labels, all_predictions, average='binary')
-    recall = recall_score(all_labels, all_predictions, average='binary')
-    f1 = f1_score(all_labels, all_predictions, average='binary')
+    precision = precision_score(all_labels, all_predictions, average="binary")
+    recall = recall_score(all_labels, all_predictions, average="binary")
+    f1 = f1_score(all_labels, all_predictions, average="binary")
 
     return accuracy, precision, recall, f1
 
-def objective_with_cv(trial, model_class, train_data, n_epochs=10, device='cpu'):
+
+def objective_with_cv(trial, model_class, train_data, n_epochs=10, device="cpu"):
     """
     Objective function for Optuna to optimize hyperparameters
-    
+
     Args:
     - trial: Optuna trial
     - model: PyTorch model class
     - train_data: PyTorch dataset
     - n_epochs: number of epochs to train the model
     - device: 'cpu' or 'cuda'
-    
+
     Returns:
     - mean_accuracy: mean accuracy of the model on a 5-fold cross-validation
     """
     # Suggest hyperparameters
-    learning_rate = trial.suggest_float('learning_rate', 1e-5, 1e-1, log=True)
-    batch_size = trial.suggest_categorical('batch_size', [32, 64, 128])
-    dropout_rate = trial.suggest_float('dropout_rate', 0.0, 0.5)
-    weight_decay = trial.suggest_float('weight_decay', 1e-5, 1e-2, log=True)
-    optimizer_name = trial.suggest_categorical('optimizer', ['Adam', 'SGD', 'RMSprop'])
+    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-1, log=True)
+    batch_size = trial.suggest_categorical("batch_size", [32, 64, 128])
+    dropout_rate = trial.suggest_float("dropout_rate", 0.0, 0.5)
+    weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
+    optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "SGD", "RMSprop"])
 
     # Initialize k-fold cross-validation
     kf = KFold(n_splits=5)
@@ -148,7 +185,9 @@ def objective_with_cv(trial, model_class, train_data, n_epochs=10, device='cpu')
         # Initialize model, criterion, and optimizer
         model = model_class(dropout_rate=dropout_rate).to(device)
         criterion = nn.BCELoss()
-        optimizer = getattr(optim, optimizer_name)(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        optimizer = getattr(optim, optimizer_name)(
+            model.parameters(), lr=learning_rate, weight_decay=weight_decay
+        )
 
         # Training loop
         for epoch in range(n_epochs):
