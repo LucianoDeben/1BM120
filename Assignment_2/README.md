@@ -30,10 +30,6 @@ A CUDA-enabled GPU is recommended for faster computation, but the code can also 
 
 The `Assignment_2_Notebook.ipynb` notebook is used to train and test the CNN on the provided image dataset and evaluate its performance. The script will output the model's learning curves and results after hyperparameter optimization.
 
-## Instructions
-
-The `Assignment_2_Notebook.ipynb` notebook is used to train and test the CNN on the provided image dataset and evaluate its performance. The notebook will output the model's learning curves and results after hyperparameter optimization.
-
 To run the Jupyter notebook, follow these steps:
 
 1. Click on `Assignment_2_Notebook.ipynb` to open the notebook.
