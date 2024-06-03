@@ -39,7 +39,7 @@ def train_model(
     train_size = int((1 - val_split) * len(train_data))
     val_size = len(train_data) - train_size
     train_dataset, val_dataset = random_split(
-        train_data, [train_size, val_size], generator=torch.Generator().manual_seed(42)
+        train_data, [train_size, val_size], generator=torch.Generator().manual_seed(11)
     )
 
     # Create data loaders
