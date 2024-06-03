@@ -13,6 +13,7 @@ def train_model(
     criterion,
     optimizer,
     device,
+    batch_size=64,
     n_epochs=10,
     val_split=0.1,
     model_name="simple_model",
@@ -43,9 +44,11 @@ def train_model(
 
     # Create data loaders
     train_loader = DataLoader(
-        train_dataset, batch_size=64, shuffle=True, drop_last=False
+        train_dataset, batch_size=batch_size, shuffle=True, drop_last=False
     )
-    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False, drop_last=False)
+    val_loader = DataLoader(
+        val_dataset, batch_size=batch_size, shuffle=False, drop_last=False
+    )
 
     train_losses = []
     val_losses = []
