@@ -170,7 +170,7 @@ def objective_with_cv(trial, model_class, train_data, n_epochs=10, device="cpu")
     """
     # Suggest hyperparameters
     learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-1, log=True)
-    batch_size = trial.suggest_categorical("batch_size", [32, 64, 128])
+    batch_size = trial.suggest_categorical("batch_size", [4, 8, 16, 32, 64])
     dropout_rate = trial.suggest_float("dropout_rate", 0.0, 0.5)
     weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True)
     optimizer_name = trial.suggest_categorical("optimizer", ["Adam", "SGD", "RMSprop"])
